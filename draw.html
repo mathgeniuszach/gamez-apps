@@ -1,11 +1,15 @@
 <p>Hello!</p>
 
-<style type="text/css" scoped>
+<style>
     p {
         color: blue;
     }
 </style>
 
 <script>
-    console.log(window.parent.HOSTING);
+    if (HOSTING) {
+        console.log("Hello, I am da HOST");
+    } else {
+        console.log("HELLOW! I am the CLIENT");
+    }
 </script>
