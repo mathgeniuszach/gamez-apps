@@ -1,0 +1,6 @@
+{
+    draw: {
+        desc: A simple drawing app.
+        file: draw.html
+    }
+}
