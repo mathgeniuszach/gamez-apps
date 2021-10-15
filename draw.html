@@ -7,9 +7,5 @@
 </style>
 
 <script>
-    if (HOSTING) {
-        console.log("Hello, I am da HOST");
-    } else {
-        console.log("HELLOW! I am the CLIENT");
-    }
+    console.log(window.parent.HOSTING);
 </script>
