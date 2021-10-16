@@ -1,16 +1,159 @@
-<p class="b">Hello!</p>
-<a href="javascript:quit()">Quit</a>
+<div id="buttons">
+    <button onclick="G.sl('clear')">Clear</button>
+    <input id="color-ipt" type="color" onchange="G.color=this.value">
+    <input id="size-ipt" type="number" min="1" onchange="G.setSize(this)">
+    <input id="alt-color-ipt" type="color" onchange="G.altColor=this.value">
+    <input id="alt-size-ipt" type="number" min="1" onchange="G.setSize(this, true)">
+    <button onclick="G.export()">Export</button>
+</div>
+<canvas width="500" height="500" oncontextmenu="return false" ondragover="return false" ondrop="G.drop(event)"></canvas>
+
+
 
 <style>
-    .b {
-        color: blue;
+    canvas {
+        background-color: white;
+        border: var(--box-border-width) solid var(--box-border-color-light);
+    }
+    #buttons {
+        display: flex;
+        margin-bottom: 5px;
+    }
+    #buttons > * {
+        margin-right: 5px;
+    }
+    input[type=number] {
+        width: 42px;
     }
 </style>
 
-<script>
-    if (HOSTING) {
-        console.log("Hello, I am da HOST");
-    } else {
-        console.log("HELLOW! I am the CLIENT");
+<script>(()=>{
+    let loaded = false;
+    const canvas = $("canvas");
+    const ctx = canvas.getContext("2d");
+    ctx.lineCap = "round";
+
+    G.color = "#000000";
+    G.altColor = "#FFFFFF";
+    G.size = 3;
+    G.altSize = 3;
+
+    $("#color-ipt").value = G.color;
+    $("#alt-color-ipt").value = G.altColor;
+    $("#size-ipt").value = G.size;
+    $("#alt-size-ipt").value = G.altSize;
+    
+    G.sl = (s, ...args) => {
+        if (loaded) signal(s, ...args);
     }
-</script>
+    
+    // Called to update the entire screen on client join or drag and drop picture.
+    SOCKET.bind("screen", (id, imgdata) => {
+        const img = new Image();
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0);
+            loaded = true;
+        };
+        img.src = imgdata;
+
+        if (HOSTING) SOCKET.sendAll("screen", ID, data);
+    });
+    // Drawing a single line event
+    SOCKET.bind("draw", (id, x, y, x2, y2, color, size) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.closePath();
+
+        if (HOSTING) SOCKET.sendAll("draw", id, x, y, x2, y2, color, size);
+    });
+    // Clear canvas event
+    SOCKET.bind("clear", (id) => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (HOSTING) SOCKET.sendAll("clear", ID);
+    });
+
+
+    // Export image from canvas
+    G.export = () => {
+        dstCanvas = document.createElement("canvas");
+        dstCanvas.width = canvas.width;
+        dstCanvas.height = canvas.height;
+
+        dstCtx = dstCanvas.getContext("2d");
+        dstCtx.fillStyle = "#ffffff";
+        dstCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+        dstCtx.drawImage(canvas, 0, 0);
+
+        dataURL(dstCanvas.toDataURL("image/png"));
+        dstCanvas.remove();
+    };
+    // Drop image on canvas
+    G.drop = (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.addEventListener("load", () => {
+                G.sl("screen", reader.result);
+            });
+            reader.readAsDataURL(file);
+        }
+    }
+    // Set stroke size
+    G.setSize = (ipt, alt) => {
+        if (ipt.value < 1) {
+            ipt.value = 1;
+            if (alt) G.altSize = 1;
+            else G.size = 1;
+        } else {
+            if (alt) G.altSize = ipt.value;
+            else G.size = ipt.value;
+        }
+    };
+
+    // Bind onmousedown event
+    canvas.onmousedown = function (e) {
+        e.preventDefault();
+
+        const rect = canvas.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+        let size = e.which == 3 ? G.altSize : G.size;
+        let color = e.which == 3 ? G.altColor : G.color;
+
+        G.sl("draw", x, y, x, y, color, size);
+
+        document.onmousemove = function (e2) {
+            e2.preventDefault();
+            const nx = e2.clientX - rect.left;
+            const ny = e2.clientY - rect.top;
+            G.sl("draw", x, y, nx, ny, color, size);
+            x = nx;
+            y = ny;
+        }
+        document.onmouseup = function (e2) {
+            e2.preventDefault();
+            document.onmousemove = null;
+            document.onmouseup = null;
+        }
+    };
+    
+    
+    if (HOSTING) {
+        // Whenever a new person joins, give them the state of the canvas.
+        SOCKET.bind("join", (id) => {
+            const img = canvas.toDataURL("image/png");
+            SOCKET.send(id, "screen", ID, img);
+        });
+        
+        // We are ready!
+        loaded = true;
+        canvas.insertAdjacentHTML("afterend", '<br><a href="javascript:quit()">Quit</a>');
+    }
+})()</script>
