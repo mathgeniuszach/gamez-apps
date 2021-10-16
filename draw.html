@@ -46,6 +46,7 @@
     
     // Called to update the entire screen on client join or drag and drop picture.
     SOCKET.bind("screen", (id, imgdata) => {
+        console.log("Hello");
         const img = new Image();
         img.onload = () => {
             ctx.drawImage(img, 0, 0);
@@ -145,12 +146,18 @@
     if (HOSTING) {
         // Whenever a new person joins, give them the state of the canvas.
         SOCKET.bind("join", (id) => {
+            console.log(id, "join");
             const img = canvas.toDataURL("image/png");
             SOCKET.send(id, "screen", ID, img);
         });
+        SOCKET.sendAll("ready");
         
         // We are ready!
         loaded = true;
         canvas.insertAdjacentHTML("afterend", '<br><a href="javascript:quit()">Quit</a>');
+    } else {
+        SOCKET.bind("ready", () => {
+            loaded = true;
+        })
     }
 })()</script>
