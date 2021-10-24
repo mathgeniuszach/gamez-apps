@@ -3,4 +3,8 @@
         desc: A simple drawing app.
         file: draw.html
     }
+    snake: {
+        desc: A multiplayer snake game.
+        file: snake.html
+    }
 }
