@@ -89,7 +89,7 @@
                 + "In the shape, numbers 0-8 represent no cell to full cell, spaces are interpreted as 0, and all other characters as 8. Cells are rounded to being full or empty.",
             type: "textarea",
             def: "20x20, 0, 0, true\n\nX",
-            gap: true,
+            // gap: true,
         },
         
         view: {
@@ -98,7 +98,7 @@
             type: "int",
             def: 10,
             min: 1,
-            gap: true,
+            // gap: true,
         },
         
         speed: {
@@ -132,13 +132,12 @@
             } else {
                 if (HOSTING) SOCKET.sendAll("add", id)
 
-                G.players.push({
-                    id: id,
+                G.players[id] = {
                     color: "#2df",
                     start: null,
                     end: null,
                     dir: 0 // -1: up, 1: down, -2: left, 2: right
-                })
+                };
                 loadPlayers()
                 
                 if (id == ID) {
