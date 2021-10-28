@@ -1,7 +1,7 @@
 <div class="state" id="lobby" hidden>
     <div class="panel" id="gplayers"></div>
     <button id="tjoin" onchange="G.tjoin()">Join</button>
-    <input id="colorer" type="color" value="#2df" hidden>
+    <input id="colorer" type="color" value="#22ddff" hidden>
     <div class="host">
         <div id="opts"></div>
         <button onchange="G.restate('ingame')">Start</button>
@@ -122,7 +122,7 @@
             def: 5
         },
     })
-    restate("lobby")
+    G.restate("lobby")
     
     SOCKET.bind("add", (id) => {
         if (state == "lobby") {
