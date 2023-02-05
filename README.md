@@ -1,3 +1,3 @@
 # gamez-apps
 
-Old javascript games for an old version of my website
+Old javascript games for an old version of my website.
